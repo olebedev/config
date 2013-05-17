@@ -56,7 +56,7 @@ Then the inner values are fetched relatively to the subset:
 	// ...
 
 For lists, the dotted path must use an index to refer to a specific value.
-To retrieve retrieve information from a user stored in the configuration above:
+To retrieve the information from a user stored in the configuration above:
 
 	user1, err := cfg.Map("development.users.0")
 	// ...
