@@ -12,15 +12,23 @@ var yamlString = `
 map:
   key0: true
   key1: false
-  key2: 4.2
-  key3: 42
-  key4: value5
+  key2: "true"
+  key3: "false"
+  key4: 4.2
+  key5: "4.2"
+  key6: 42
+  key7: "42"
+  key8: value8
 list:
   - true
   - false
+  - "true"
+  - "false"
   - 4.3
+  - "4.3"
   - 43
-  - item4
+  - "43"
+  - item8
 config:
   server:
     - www.google.com
@@ -50,26 +58,124 @@ var configTests = []struct{
 }{
     // ok
     {"map.key0", "Bool", true, true},
+    {"map.key0", "String", "true", true},
+    // bad
+    {"map.key0", "Float64", "", false},
+    {"map.key0", "Int", "", false},
+    // ok
     {"map.key1", "Bool", false, true},
-    {"map.key2", "Float64", 4.2, true},
-    {"map.key3", "Int", 42, true},
-    {"map.key4", "String", "value5", true},
+    {"map.key1", "String", "false", true},
+    // bad
+    {"map.key1", "Float64", "", false},
+    {"map.key1", "Int", "", false},
+    // ok
+    {"map.key2", "Bool", true, true},
+    {"map.key2", "String", "true", true},
+    // bad
+    {"map.key2", "Float64", "", false},
+    {"map.key2", "Int", "", false},
+    // ok
+    {"map.key3", "Bool", false, true},
+    {"map.key3", "String", "false", true},
+    // bad
+    {"map.key3", "Float64", "", false},
+    {"map.key3", "Int", "", false},
+    // ok
+    {"map.key4", "Float64", 4.2, true},
+    {"map.key4", "String", "4.2", true},
+    // bad
+    {"map.key4", "Bool", "", false},
+    {"map.key4", "Int", "", false},
+    // ok
+    {"map.key5", "Float64", 4.2, true},
+    {"map.key5", "String", "4.2", true},
     // bad
     {"map.key5", "Bool", "", false},
-    {"map.key5", "Float64", "", false},
     {"map.key5", "Int", "", false},
-    {"map.key5", "String", "", false},
+    // ok
+    {"map.key6", "Float64", float64(42), true},
+    {"map.key6", "Int", 42, true},
+    {"map.key6", "String", "42", true},
+    // bad
+    {"map.key6", "Bool", "", false},
+    // ok
+    {"map.key7", "Float64", float64(42), true},
+    {"map.key7", "Int", 42, true},
+    {"map.key7", "String", "42", true},
+    // bad
+    {"map.key7", "Bool", "", false},
+    // ok
+    {"map.key8", "String", "value8", true},
+    // bad
+    {"map.key8", "Bool", "", false},
+    {"map.key8", "Float64", "", false},
+    {"map.key8", "Int", "", false},
+    // bad
+    {"map.key9", "Bool", "", false},
+    {"map.key9", "Float64", "", false},
+    {"map.key9", "Int", "", false},
+    {"map.key9", "String", "", false},
+
     // ok
     {"list.0", "Bool", true, true},
-    {"list.1", "Bool", false, true},
-    {"list.2", "Float64", 4.3, true},
-    {"list.3", "Int", 43, true},
-    {"list.4", "String", "item4", true},
+    {"list.0", "String", "true", true},
     // bad
-    {"list.key5", "Bool", "", false},
-    {"list.key5", "Float64", "", false},
-    {"list.key5", "Int", "", false},
-    {"list.key5", "String", "", false},
+    {"list.0", "Float64", "", false},
+    {"list.0", "Int", "", false},
+    // ok
+    {"list.1", "Bool", false, true},
+    {"list.1", "String", "false", true},
+    // bad
+    {"list.1", "Float64", "", false},
+    {"list.1", "Int", "", false},
+    // ok
+    {"list.2", "Bool", true, true},
+    {"list.2", "String", "true", true},
+    // bad
+    {"list.2", "Float64", "", false},
+    {"list.2", "Int", "", false},
+    // ok
+    {"list.3", "Bool", false, true},
+    {"list.3", "String", "false", true},
+    // bad
+    {"list.3", "Float64", "", false},
+    {"list.3", "Int", "", false},
+    // ok
+    {"list.4", "Float64", 4.3, true},
+    {"list.4", "String", "4.3", true},
+    // bad
+    {"list.4", "Bool", "", false},
+    {"list.4", "Int", "", false},
+    // ok
+    {"list.5", "Float64", 4.3, true},
+    {"list.5", "String", "4.3", true},
+    // bad
+    {"list.5", "Bool", "", false},
+    {"list.5", "Int", "", false},
+    // ok
+    {"list.6", "Float64", float64(43), true},
+    {"list.6", "Int", 43, true},
+    {"list.6", "String", "43", true},
+    // bad
+    {"list.6", "Bool", "", false},
+    // ok
+    {"list.7", "Float64", float64(43), true},
+    {"list.7", "Int", 43, true},
+    {"list.7", "String", "43", true},
+    // bad
+    {"list.7", "Bool", "", false},
+    // ok
+    {"list.8", "String", "item8", true},
+    // bad
+    {"list.8", "Bool", "", false},
+    {"list.8", "Float64", "", false},
+    {"list.8", "Int", "", false},
+    // bad
+    {"list.9", "Bool", "", false},
+    {"list.9", "Float64", "", false},
+    {"list.9", "Int", "", false},
+    {"list.9", "String", "", false},
+
     // ok
     {"config.server.0", "String", "www.google.com", true},
     {"config.server.1", "String", "www.cnn.com", true},
@@ -79,6 +185,7 @@ var configTests = []struct{
     {"config.server.3", "Float64", "", false},
     {"config.server.3", "Int", "", false},
     {"config.server.3", "String", "", false},
+
     // ok
     {"config.admin.0.username", "String", "calvin", true},
     {"config.admin.0.password", "String", "yukon", true},
@@ -89,6 +196,7 @@ var configTests = []struct{
     {"config.admin.0.country", "Float64", "", false},
     {"config.admin.0.country", "Int", "", false},
     {"config.admin.0.country", "String", "", false},
+
     // ok
     {"messages.0", "String", "Welcome\n\nback!\n", true},
     {"messages.1", "String", "Farewell,\nmy friend!\n", true},
@@ -97,6 +205,7 @@ var configTests = []struct{
     {"messages.2", "Float64", "", false},
     {"messages.2", "Int", "", false},
     {"messages.2", "String", "", false},
+
     // ok
     {"config.server", "List", []interface{}{"www.google.com", "www.cnn.com", "www.example.com"}, true},
     {"config.admin.0", "Map", map[string]interface{}{"username": "calvin", "password": "yukon"}, true},

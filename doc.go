@@ -31,7 +31,7 @@ An equivalent JSON configuration could be built using ParseJson():
 	cfg, err := ParseJson(jsonString)
 	// ...
 
-From now, we can retrieve configuration values using a path in dotted notation
+From now, we can retrieve configuration values using a path in dotted notation.
 So this:
 
 	host, err := cfg.String("development.database.host")
@@ -41,7 +41,8 @@ So this:
 
 Besides String(), other types can be fetched directly: Bool(), Float64(),
 Int(), Map() and List(). All these methods will return an error if the type
-stored in the configuration doesn't match the requested type.
+stored in the configuration doesn't match or can't be converted to the
+requested type.
 
 A nested configuration can be fetched using Get(). To get a new *Config
 instance with a subset of the configuration, we can do:
@@ -55,14 +56,18 @@ Then the inner values are fetched relatively to the subset:
 	// ...
 
 For lists, the dotted path must use an index to refer to a specific value.
-These will retrieve maps for a user stored in the configuration:
+To retrieve retrieve information from a user stored in the configuration above:
 
-	user, err := cfg.Map("development.users.0")
+	user1, err := cfg.Map("development.users.0")
+	// ...
+	user2, err := cfg.Map("development.users.1")
 	// ...
 
 	// or...
 
-	user, err := cfg.Map("development.users.1")
+	name1, err := cfg.String("development.users.0.name")
+	// ...
+	name2, err := cfg.String("development.users.1.name")
 	// ...
 
 We can render JSON or YAML calling the appropriate Render*() functions.

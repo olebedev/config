@@ -36,8 +36,13 @@ func (cfg *Config) Bool(path string) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	if value, ok := n.(bool); ok {
-		return value, nil
+	switch n := n.(type) {
+	case bool:
+		return n, nil
+	case string:
+		if v, err := strconv.ParseBool(n); err == nil {
+			return v, nil
+		}
 	}
 	return false, typeMismatch("bool", n)
 }
@@ -48,8 +53,15 @@ func (cfg *Config) Float64(path string) (float64, error) {
 	if err != nil {
 		return 0, err
 	}
-	if value, ok := n.(float64); ok {
-		return value, nil
+	switch n := n.(type) {
+	case float64:
+		return n, nil
+	case int:
+		return float64(n), nil
+	case string:
+		if v, err := strconv.ParseFloat(n, 64); err == nil {
+			return v, nil
+		}
 	}
 	return 0, typeMismatch("float64", n)
 }
@@ -60,13 +72,18 @@ func (cfg *Config) Int(path string) (int, error) {
 	if err != nil {
 		return 0, err
 	}
-	if value, ok := n.(int); ok {
-		return value, nil
-	}
-	// encoding/json only unmarshals numbers into floats.
-	if value, ok := n.(float64); ok {
-		if i := int(value); fmt.Sprint(i) == fmt.Sprint(value) {
+	switch n := n.(type) {
+	case float64:
+		// encoding/json unmarshals numbers into floats, so we compare
+		// the string representation to see if we can return an int.
+		if i := int(n); fmt.Sprint(i) == fmt.Sprint(n) {
 			return i, nil
+		}
+	case int:
+		return n, nil
+	case string:
+		if v, err := strconv.ParseInt(n, 10, 0); err == nil {
+			return int(v), nil
 		}
 	}
 	return 0, typeMismatch("int", n)
@@ -102,8 +119,11 @@ func (cfg *Config) String(path string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	if value, ok := n.(string); ok {
-		return value, nil
+	switch n := n.(type) {
+	case bool, float64, int:
+		return fmt.Sprint(n), nil
+	case string:
+		return n, nil
 	}
 	return "", typeMismatch("string", n)
 }
@@ -199,13 +219,7 @@ func normalizeValue(value interface{}) (interface{}, error) {
 			node[key] = item
 		}
 		return node, nil
-	case bool:
-		return value, nil
-	case float64:
-		return value, nil
-	case int:
-		return value, nil
-	case string:
+	case bool, float64, int, string:
 		return value, nil
 	}
 	return nil, fmt.Errorf("Unsupported type: %T", value)
@@ -242,10 +256,6 @@ func parseJson(cfg []byte) (*Config, error) {
 
 // RenderJson renders a YAML configuration.
 func RenderJson(cfg interface{}) (string, error) {
-	cfg, err := normalizeValue(cfg)
-	if err != nil {
-		return "", err
-	}
 	b, err := json.Marshal(cfg)
 	if err != nil {
 		return "", err
@@ -284,10 +294,6 @@ func parseYaml(cfg []byte) (*Config, error) {
 
 // RenderYaml renders a YAML configuration.
 func RenderYaml(cfg interface{}) (string, error) {
-	cfg, err := normalizeValue(cfg)
-	if err != nil {
-		return "", err
-	}
 	b, err := goyaml.Marshal(cfg)
 	if err != nil {
 		return "", err
