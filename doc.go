@@ -44,8 +44,8 @@ Int(), Map() and List(). All these methods will return an error if the type
 stored in the configuration doesn't match or can't be converted to the
 requested type.
 
-A nested configuration can be fetched using Get(). To get a new *Config
-instance with a subset of the configuration, we can do:
+A nested configuration can be fetched using Get(). Here we get a new *Config
+instance with a subset of the configuration:
 
 	cfg, err := cfg.Get("development")
 	// ...
@@ -70,8 +70,9 @@ To retrieve the information from a user stored in the configuration above:
 	name2, err := cfg.String("development.users.1.name")
 	// ...
 
-We can render JSON or YAML calling the appropriate Render*() functions.
-To render a configuration like the one used in these examples:
+JSON or YAML strings can be created calling the appropriate Render*()
+functions. Here's how we render a configuration like the one used in these
+examples:
 
 	cfg := map[string]interface{}{
 		"development": map[string]interface{}{
