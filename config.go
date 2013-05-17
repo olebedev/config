@@ -1,0 +1,296 @@
+// Copyright 2012 The Gorilla Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
+package config
+
+import (
+	"fmt"
+	"encoding/json"
+	"io/ioutil"
+	"strconv"
+	"strings"
+
+	"launchpad.net/~niemeyer/goyaml/beta"
+)
+
+// Config ---------------------------------------------------------------------
+
+// Config represents a configuration with convenient access methods.
+type Config struct {
+	Root interface{}
+}
+
+// Get returns a nested config according to a dotted path.
+func (cfg *Config) Get(path string) (*Config, error) {
+	n, err := Get(cfg.Root, path)
+	if err != nil {
+		return nil, err
+	}
+	return &Config{Root: n}, nil
+}
+
+// Bool returns a bool according to a dotted path.
+func (cfg *Config) Bool(path string) (bool, error) {
+	n, err := Get(cfg.Root, path)
+	if err != nil {
+		return false, err
+	}
+	if value, ok := n.(bool); ok {
+		return value, nil
+	}
+	return false, typeMismatch("bool", n)
+}
+
+// Float64 returns a float64 according to a dotted path.
+func (cfg *Config) Float64(path string) (float64, error) {
+	n, err := Get(cfg.Root, path)
+	if err != nil {
+		return 0, err
+	}
+	if value, ok := n.(float64); ok {
+		return value, nil
+	}
+	return 0, typeMismatch("float64", n)
+}
+
+// Int returns an int according to a dotted path.
+func (cfg *Config) Int(path string) (int, error) {
+	n, err := Get(cfg.Root, path)
+	if err != nil {
+		return 0, err
+	}
+	if value, ok := n.(int); ok {
+		return value, nil
+	}
+	// encoding/json only unmarshals numbers into floats.
+	if value, ok := n.(float64); ok {
+		if i := int(value); fmt.Sprint(i) == fmt.Sprint(value) {
+			return i, nil
+		}
+	}
+	return 0, typeMismatch("int", n)
+}
+
+// List returns a []interface{} according to a dotted path.
+func (cfg *Config) List(path string) ([]interface{}, error) {
+	n, err := Get(cfg.Root, path)
+	if err != nil {
+		return nil, err
+	}
+	if value, ok := n.([]interface{}); ok {
+		return value, nil
+	}
+	return nil, typeMismatch("[]interface{}", n)
+}
+
+// Map returns a map[string]interface{} according to a dotted path.
+func (cfg *Config) Map(path string) (map[string]interface{}, error) {
+	n, err := Get(cfg.Root, path)
+	if err != nil {
+		return nil, err
+	}
+	if value, ok := n.(map[string]interface{}); ok {
+		return value, nil
+	}
+	return nil, typeMismatch("map[string]interface{}", n)
+}
+
+// String returns a string according to a dotted path.
+func (cfg *Config) String(path string) (string, error) {
+	n, err := Get(cfg.Root, path)
+	if err != nil {
+		return "", err
+	}
+	if value, ok := n.(string); ok {
+		return value, nil
+	}
+	return "", typeMismatch("string", n)
+}
+
+// Fetching -------------------------------------------------------------------
+
+// Get returns a child of the given value according to a dotted path.
+func Get(cfg interface{}, path string) (interface{}, error) {
+	parts := strings.Split(path, ".")
+	for k, v := range parts {
+		if v == "" {
+			if k == 0 {
+				parts = parts[1:]
+			} else {
+				return nil, fmt.Errorf("Invalid path %q", path)
+			}
+		}
+	}
+	return get(cfg, parts, 0)
+}
+
+// get returns a child node recursivelly according to a splitted path.
+func get(cfg interface{}, parts []string, pos int) (interface{}, error) {
+	if pos >= len(parts) {
+		return cfg, nil
+	}
+	switch cfg := cfg.(type) {
+	case []interface{}:
+		if idx, error := strconv.ParseInt(parts[pos], 10, 0); error == nil && int(idx) < len(cfg) {
+			return get(cfg[idx], parts, pos+1)
+		}
+	case map[string]interface{}:
+		if value, ok := cfg[parts[pos]]; ok {
+			return get(value, parts, pos+1)
+		}
+	}
+	return nil, fmt.Errorf(`Invalid path %q (found: %q; not found: %q)`,
+		strings.Join(parts, "."), strings.Join(parts[:pos], "."),
+		strings.Join(parts[pos:], "."))
+}
+
+// typeMismatch returns an error for an expected type.
+func typeMismatch(expected string, got interface{}) error {
+	return fmt.Errorf("Type mismatch: expected %s, got %T", expected, got)
+}
+
+// Parsing --------------------------------------------------------------------
+
+// Must is a wrapper for parsing functions to be used during initialization.
+// It panics on failure.
+func Must(cfg *Config, err error) *Config {
+	if err != nil {
+		panic(err)
+	}
+	return cfg
+}
+
+// normalizeValue normalizes a unmarshalled value. This is needed because
+// encoding/json doesn't support marshalling map[interface{}]interface{}.
+func normalizeValue(value interface{}) (interface{}, error) {
+	switch value := value.(type) {
+	case map[interface{}]interface{}:
+		node := make(map[string]interface{}, len(value))
+		for k, v := range value {
+			key, ok := k.(string)
+			if !ok {
+				return nil, fmt.Errorf("Unsupported map key: %#v", k)
+			}
+			item, err := normalizeValue(v)
+			if err != nil {
+				return nil, fmt.Errorf("Unsupported map value: %#v", v)
+			}
+			node[key] = item
+		}
+		return node, nil
+	case map[string]interface{}:
+		node := make(map[string]interface{}, len(value))
+		for key, v := range value {
+			item, err := normalizeValue(v)
+			if err != nil {
+				return nil, fmt.Errorf("Unsupported map value: %#v", v)
+			}
+			node[key] = item
+		}
+		return node, nil
+	case []interface{}:
+		node := make([]interface{}, len(value))
+		for key, v := range value {
+			item, err := normalizeValue(v)
+			if err != nil {
+				return nil, fmt.Errorf("Unsupported list item: %#v", v)
+			}
+			node[key] = item
+		}
+		return node, nil
+	case bool:
+		return value, nil
+	case float64:
+		return value, nil
+	case int:
+		return value, nil
+	case string:
+		return value, nil
+	}
+	return nil, fmt.Errorf("Unsupported type: %T", value)
+}
+
+// JSON -----------------------------------------------------------------------
+
+// ParseJson reads a JSON configuration from the given string.
+func ParseJson(cfg string) (*Config, error) {
+	return parseJson([]byte(cfg))
+}
+
+// ParseJsonFile reads a JSON configuration from the given filename.
+func ParseJsonFile(filename string) (*Config, error) {
+	cfg, err := ioutil.ReadFile(filename)
+	if err != nil {
+		return nil, err
+	}
+	return parseJson(cfg)
+}
+
+// parseJson performs the real JSON parsing.
+func parseJson(cfg []byte) (*Config, error) {
+	var out interface{}
+	var err error
+	if err = json.Unmarshal(cfg, &out); err != nil {
+		return nil, err
+	}
+	if out, err = normalizeValue(out); err != nil {
+		return nil, err
+	}
+	return &Config{Root: out}, nil
+}
+
+// RenderJson renders a YAML configuration.
+func RenderJson(cfg interface{}) (string, error) {
+	cfg, err := normalizeValue(cfg)
+	if err != nil {
+		return "", err
+	}
+	b, err := json.Marshal(cfg)
+	if err != nil {
+		return "", err
+	}
+	return string(b), nil
+}
+
+// YAML -----------------------------------------------------------------------
+
+// ParseYaml reads a YAML configuration from the given string.
+func ParseYaml(cfg string) (*Config, error) {
+	return parseYaml([]byte(cfg))
+}
+
+// ParseYamlFile reads a YAML configuration from the given filename.
+func ParseYamlFile(filename string) (*Config, error) {
+	cfg, err := ioutil.ReadFile(filename)
+	if err != nil {
+		return nil, err
+	}
+	return parseYaml(cfg)
+}
+
+// parseYaml performs the real YAML parsing.
+func parseYaml(cfg []byte) (*Config, error) {
+	var out interface{}
+	var err error
+	if err = goyaml.Unmarshal(cfg, &out); err != nil {
+		return nil, err
+	}
+	if out, err = normalizeValue(out); err != nil {
+		return nil, err
+	}
+	return &Config{Root: out}, nil
+}
+
+// RenderYaml renders a YAML configuration.
+func RenderYaml(cfg interface{}) (string, error) {
+	cfg, err := normalizeValue(cfg)
+	if err != nil {
+		return "", err
+	}
+	b, err := goyaml.Marshal(cfg)
+	if err != nil {
+		return "", err
+	}
+	return string(b), nil
+}
