@@ -225,7 +225,7 @@ func TestYamlConfig(t *testing.T) {
     if err != nil {
         t.Fatal(err)
     }
-    testConfig(t, cfg, false)
+    testConfig(t, cfg)
 }
 
 func TestJsonConfig(t *testing.T) {
@@ -241,10 +241,10 @@ func TestJsonConfig(t *testing.T) {
     if err != nil {
         t.Fatal(err)
     }
-    testConfig(t, cfg, true)
+    testConfig(t, cfg)
 }
 
-func testConfig(t *testing.T, cfg *Config, json bool) {
+func testConfig(t *testing.T, cfg *Config) {
     Loop:
     for _, test := range configTests {
         var got interface{}
