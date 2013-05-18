@@ -160,9 +160,9 @@ func get(cfg interface{}, parts []string, pos int) (interface{}, error) {
 			return get(value, parts, pos+1)
 		}
 	}
-	return nil, fmt.Errorf(`Invalid path %q (found: %q; not found: %q)`,
-		strings.Join(parts, "."), strings.Join(parts[:pos], "."),
-		strings.Join(parts[pos:], "."))
+	return nil, fmt.Errorf(
+		"Invalid type at %q: expected []interface{} or map[string]interface{}; got %T",
+		strings.Join(parts[:pos+1], "."), cfg)
 }
 
 // typeMismatch returns an error for an expected type.

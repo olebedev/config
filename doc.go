@@ -40,8 +40,8 @@ From now, we can retrieve configuration values using a path in dotted notation:
     host, err := cfg.String("production.database.host")
 
 Besides String(), other types can be fetched directly: Bool(), Float64(),
-Int(), Map() and List(). All these methods will return an error if the type
-stored in the configuration doesn't match or can't be converted to the
+Int(), Map() and List(). All these methods will return an error if the path
+doesn't exist, or the value doesn't match or can't be converted to the
 requested type.
 
 A nested configuration can be fetched using Get(). Here we get a new *Config
