@@ -23,11 +23,11 @@ Let's start with a simple YAML example:
 We can parse it using ParseYaml(), which will return a *Config instance on
 success:
 
-    cfg, err := ParseYaml(yamlString)
+    cfg, err := config.ParseYaml(yamlString)
 
 An equivalent JSON configuration could be built using ParseJson():
 
-    cfg, err := ParseJson(jsonString)
+    cfg, err := config.ParseJson(jsonString)
 
 From now, we can retrieve configuration values using a path in dotted notation:
 
@@ -37,7 +37,7 @@ From now, we can retrieve configuration values using a path in dotted notation:
     // or...
 
     // "192.168.1.1"
-    host, err := cfg.String("development.database.host")
+    host, err := cfg.String("production.database.host")
 
 Besides String(), other types can be fetched directly: Bool(), Float64(),
 Int(), Map() and List(). All these methods will return an error if the type
@@ -96,11 +96,11 @@ examples:
         },
     }
 
-    json, err := RenderJson(cfg)
+    json, err := config.RenderJson(cfg)
 
     // or...
 
-    yaml, err := RenderYaml(cfg)
+    yaml, err := config.RenderYaml(cfg)
 
 This results in a configuration string to be stored in a file or database.
 */
