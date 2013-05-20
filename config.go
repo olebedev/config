@@ -40,11 +40,7 @@ func (cfg *Config) Bool(path string) (bool, error) {
 	case bool:
 		return n, nil
 	case string:
-		if v, err := strconv.ParseBool(n); err == nil {
-			return v, nil
-		} else {
-			return false, err
-		}
+		return strconv.ParseBool(n)
 	}
 	return false, typeMismatch("bool or string", n)
 }
@@ -61,11 +57,7 @@ func (cfg *Config) Float64(path string) (float64, error) {
 	case int:
 		return float64(n), nil
 	case string:
-		if v, err := strconv.ParseFloat(n, 64); err == nil {
-			return v, nil
-		} else {
-			return 0, err
-		}
+		return strconv.ParseFloat(n, 64)
 	}
 	return 0, typeMismatch("float64, int or string", n)
 }
