@@ -42,9 +42,11 @@ func (cfg *Config) Bool(path string) (bool, error) {
 	case string:
 		if v, err := strconv.ParseBool(n); err == nil {
 			return v, nil
+		} else {
+			return false, err
 		}
 	}
-	return false, typeMismatch("bool", n)
+	return false, typeMismatch("bool or string", n)
 }
 
 // Float64 returns a float64 according to a dotted path.
@@ -61,9 +63,11 @@ func (cfg *Config) Float64(path string) (float64, error) {
 	case string:
 		if v, err := strconv.ParseFloat(n, 64); err == nil {
 			return v, nil
+		} else {
+			return 0, err
 		}
 	}
-	return 0, typeMismatch("float64", n)
+	return 0, typeMismatch("float64, int or string", n)
 }
 
 // Int returns an int according to a dotted path.
@@ -78,15 +82,19 @@ func (cfg *Config) Int(path string) (int, error) {
 		// the string representation to see if we can return an int.
 		if i := int(n); fmt.Sprint(i) == fmt.Sprint(n) {
 			return i, nil
+		} else {
+			return 0, fmt.Errorf("Value can't be converted to int: %v", n)
 		}
 	case int:
 		return n, nil
 	case string:
 		if v, err := strconv.ParseInt(n, 10, 0); err == nil {
 			return int(v), nil
+		} else {
+			return 0, err
 		}
 	}
-	return 0, typeMismatch("int", n)
+	return 0, typeMismatch("float64, int or string", n)
 }
 
 // List returns a []interface{} according to a dotted path.
@@ -125,7 +133,12 @@ func (cfg *Config) String(path string) (string, error) {
 	case string:
 		return n, nil
 	}
-	return "", typeMismatch("string", n)
+	return "", typeMismatch("bool, float64, int or string", n)
+}
+
+// typeMismatch returns an error for an expected type.
+func typeMismatch(expected string, got interface{}) error {
+	return fmt.Errorf("Type mismatch: expected %s; got %T", expected, got)
 }
 
 // Fetching -------------------------------------------------------------------
@@ -163,11 +176,6 @@ func get(cfg interface{}, parts []string, pos int) (interface{}, error) {
 	return nil, fmt.Errorf(
 		"Invalid type at %q: expected []interface{} or map[string]interface{}; got %T",
 		strings.Join(parts[:pos+1], "."), cfg)
-}
-
-// typeMismatch returns an error for an expected type.
-func typeMismatch(expected string, got interface{}) error {
-	return fmt.Errorf("Type mismatch: expected %s, got %T", expected, got)
 }
 
 // Parsing --------------------------------------------------------------------
