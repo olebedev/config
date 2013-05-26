@@ -138,6 +138,7 @@ func typeMismatch(expected string, got interface{}) error {
 // Get returns a child of the given value according to a dotted path.
 func Get(cfg interface{}, path string) (interface{}, error) {
 	parts := strings.Split(path, ".")
+	// Normalize path.
 	for k, v := range parts {
 		if v == "" {
 			if k == 0 {
@@ -147,27 +148,36 @@ func Get(cfg interface{}, path string) (interface{}, error) {
 			}
 		}
 	}
-	return get(cfg, parts, 0)
-}
-
-// get returns a child node recursivelly according to a splitted path.
-func get(cfg interface{}, parts []string, pos int) (interface{}, error) {
-	if pos >= len(parts) {
-		return cfg, nil
-	}
-	switch cfg := cfg.(type) {
-	case []interface{}:
-		if idx, error := strconv.ParseInt(parts[pos], 10, 0); error == nil && int(idx) < len(cfg) {
-			return get(cfg[idx], parts, pos+1)
+	// Get the value.
+	for pos, part := range parts {
+		switch c := cfg.(type) {
+		case []interface{}:
+			if i, error := strconv.ParseInt(part, 10, 0); error == nil {
+				if int(i) < len(c) {
+					cfg = c[i]
+				} else {
+					return nil, fmt.Errorf(
+						"Index out of range at %q: list has only %v items",
+						strings.Join(parts[:pos+1], "."), len(c))
+				}
+			} else {
+				return nil, fmt.Errorf("Invalid list index at %q",
+					strings.Join(parts[:pos+1], "."))
+			}
+		case map[string]interface{}:
+			if value, ok := c[part]; ok {
+				cfg = value
+			} else {
+				return nil, fmt.Errorf("Nonexistent map key at %q",
+					strings.Join(parts[:pos+1], "."))
+			}
+		default:
+			return nil, fmt.Errorf(
+				"Invalid type at %q: expected []interface{} or map[string]interface{}; got %T",
+				strings.Join(parts[:pos+1], "."), cfg)
 		}
-	case map[string]interface{}:
-		if value, ok := cfg[parts[pos]]; ok {
-			return get(value, parts, pos+1)
-		}
 	}
-	return nil, fmt.Errorf(
-		"Invalid type at %q: expected []interface{} or map[string]interface{}; got %T",
-		strings.Join(parts[:pos+1], "."), cfg)
+	return cfg, nil
 }
 
 // Parsing --------------------------------------------------------------------
