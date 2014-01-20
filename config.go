@@ -30,6 +30,10 @@ func (cfg *Config) Get(path string) (*Config, error) {
 	return &Config{Root: n}, nil
 }
 
+func (cfg *Config) Set(path string, val interface{}) error {
+	return Set(cfg.Root, path, val)
+}
+
 // Bool returns a bool according to a dotted path.
 func (cfg *Config) Bool(path string) (bool, error) {
 	n, err := Get(cfg.Root, path)
@@ -177,7 +181,65 @@ func Get(cfg interface{}, path string) (interface{}, error) {
 				strings.Join(parts[:pos+1], "."), cfg)
 		}
 	}
+
 	return cfg, nil
+}
+
+// Set returns an error, in case when it is not possible to establish the value obtained in accordance with given dotted path.
+func Set(cfg interface{}, path string, value interface{}) error {
+	parts := strings.Split(path, ".")
+	// Normalize path.
+	for k, v := range parts {
+		if v == "" {
+			if k == 0 {
+				parts = parts[1:]
+			} else {
+				return fmt.Errorf("Invalid path %q", path)
+			}
+		}
+	}
+
+	// Get the value.
+	var point = &cfg
+	for pos, part := range parts {
+		switch c := (*point).(type) {
+		case []interface{}:
+			if i, error := strconv.ParseInt(part, 10, 0); error == nil {
+				if int(i) < len(c) {
+					if pos+1 == len(parts) {
+						c[i] = value
+					} else {
+						point = &c[i]
+					}
+				} else {
+					return fmt.Errorf(
+						"Index out of range at %q: list has only %v items",
+						strings.Join(parts[:pos+1], "."), len(c))
+				}
+			} else {
+				return fmt.Errorf("Invalid list index at %q",
+					strings.Join(parts[:pos+1], "."))
+			}
+		case map[string]interface{}:
+			if va, ok := c[part]; ok {
+				if pos+1 == len(parts) {
+					c[part] = value
+				} else {
+					point = &va
+				}
+
+			} else {
+				return fmt.Errorf("Nonexistent map key at %q",
+					strings.Join(parts[:pos+1], "."))
+			}
+		default:
+			return fmt.Errorf(
+				"Invalid type at %q: expected []interface{} or map[string]interface{}; got %T",
+				strings.Join(parts[:pos+1], "."), cfg)
+		}
+	}
+
+	return nil
 }
 
 // Parsing --------------------------------------------------------------------

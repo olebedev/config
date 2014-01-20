@@ -245,6 +245,18 @@ func TestJsonConfig(t *testing.T) {
 	testConfig(t, cfg)
 }
 
+func TestSet(t *testing.T) {
+	cfg, err := ParseYaml(yamlString)
+	if err != nil {
+		t.Fatal(err)
+	}
+	val := "test"
+	err = cfg.Set("map.key8", val)
+	if v, _ := cfg.String("map.key8"); v != val {
+		t.Errorf(`%s(%T) != "%s(%T)"`, v, v, val, val)
+	}
+}
+
 func testConfig(t *testing.T, cfg *Config) {
 Loop:
 	for _, test := range configTests {
