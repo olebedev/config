@@ -10,6 +10,7 @@ import (
 	"io/ioutil"
 	"strconv"
 	"strings"
+	"syscall"
 
 	"launchpad.net/~niemeyer/goyaml/beta"
 )
@@ -32,6 +33,35 @@ func (cfg *Config) Get(path string) (*Config, error) {
 
 func (cfg *Config) Set(path string, val interface{}) error {
 	return Set(cfg.Root, path, val)
+}
+
+func (cfg *Config) Env() *Config {
+	keys := getKeys(cfg.Root)
+	for _, key := range keys {
+		if val, exist := syscall.Getenv(strings.ToUpper(strings.Join(key, "_"))); exist {
+			cfg.Set(strings.Join(key, "."), val)
+		}
+	}
+	return cfg
+}
+
+// Get all keys for given interface
+func getKeys(source interface{}, base ...string) [][]string {
+	acc := [][]string{}
+	switch c := source.(type) {
+	case map[string]interface{}:
+		for k, v := range c {
+			acc = append(acc, getKeys(v, append(base, k)...)...)
+		}
+	case []interface{}:
+		for i, v := range c {
+			k := strconv.Itoa(i)
+			acc = append(acc, getKeys(v, append(base, k)...)...)
+		}
+	default:
+		acc = append(acc, base)
+	}
+	return acc
 }
 
 // Bool returns a bool according to a dotted path.

@@ -5,6 +5,7 @@
 package config
 
 import (
+	"os"
 	"testing"
 )
 
@@ -254,6 +255,21 @@ func TestSet(t *testing.T) {
 	err = cfg.Set("map.key8", val)
 	if v, _ := cfg.String("map.key8"); v != val {
 		t.Errorf(`%s(%T) != "%s(%T)"`, v, v, val, val)
+	}
+}
+
+func TestEnv(t *testing.T) {
+	cfg, err := ParseYaml(yamlString)
+	if err != nil {
+		t.Fatal(err)
+	}
+	val := "test"
+	cfg.Set("map.key8", val)
+	os.Setenv("MAP_KEY8", val)
+	cfg.Env()
+	test, _ := cfg.String("map.key8")
+	if test != val {
+		t.Errorf(`"%s" != "%s"`, test, val)
 	}
 }
 
