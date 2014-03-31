@@ -6,6 +6,7 @@ package config
 
 import (
 	"encoding/json"
+	"flag"
 	"fmt"
 	"io/ioutil"
 	"strconv"
@@ -31,15 +32,38 @@ func (cfg *Config) Get(path string) (*Config, error) {
 	return &Config{Root: n}, nil
 }
 
+// Set a nested config according to a dotted path
 func (cfg *Config) Set(path string, val interface{}) error {
 	return Set(cfg.Root, path, val)
 }
 
+// Fetch data from system env, based on existing config keys
 func (cfg *Config) Env() *Config {
 	keys := getKeys(cfg.Root)
 	for _, key := range keys {
 		if val, exist := syscall.Getenv(strings.ToUpper(strings.Join(key, "_"))); exist {
 			cfg.Set(strings.Join(key, "."), val)
+		}
+	}
+	return cfg
+}
+
+// Parse command line arguments, based on existing config keys
+func (cfg *Config) Flag() *Config {
+	keys := getKeys(cfg.Root)
+	hash := map[string]*string{}
+	for _, key := range keys {
+		k := strings.Join(key, ".")
+		hash[k] = new(string)
+		val, _ := cfg.String(k)
+		flag.StringVar(hash[k], k, val, "")
+	}
+
+	flag.Parse()
+
+	for k, v := range hash {
+		if len(*v) > 0 {
+			cfg.Set(k, *v)
 		}
 	}
 	return cfg
