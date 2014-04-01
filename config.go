@@ -61,11 +61,10 @@ func (cfg *Config) Flag() *Config {
 
 	flag.Parse()
 
-	for k, v := range hash {
-		if len(*v) > 0 {
-			cfg.Set(k, *v)
-		}
-	}
+	flag.Visit(func(f *flag.Flag) {
+		cfg.Set(f.Name, f.Value.String())
+	})
+
 	return cfg
 }
 

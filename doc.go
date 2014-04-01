@@ -103,5 +103,27 @@ examples:
     yaml, err := config.RenderYaml(cfg)
 
 This results in a configuration string to be stored in a file or database.
+
+For more more convenience it can parse OS environment variables and command line arguments.
+
+    cfg, err := config.ParseYaml(yamlString)
+    cfg.Env()
+
+    // or
+
+    cfg.Flag()
+
+We can also specify the order of parsing:
+
+    cfg.Env().Flag()
+
+    // or
+
+    cfg.Flag().Env()
+
+In case of OS environment all existing at the moment of parsing keys will be scanned in OS environment,
+but in uppercase and the separator will be `_` instead of a `.`.
+In case of command line arguments possible to use regular dot notation syntax for all keys.
+For see existing keys we can run application with `-h`.
 */
 package config
