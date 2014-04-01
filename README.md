@@ -1,6 +1,8 @@
 config
 ======
 
+[![GoDoc](https://godoc.org/github.com/olebedev/config?status.png)](https://godoc.org/github.com/olebedev/config)
+
 Package config provides convenient access methods to configuration
 stored as JSON or YAML.
 
