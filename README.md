@@ -14,5 +14,6 @@ Major features added:
 - [`Set(path string, value interface{})`](http://godoc.org/github.com/olebedev/config#Config.Set) method
 - [`Env()`](http://godoc.org/github.com/olebedev/config#Config.Env) method, for OS environment variables parsing
 - [`Flag()`](http://godoc.org/github.com/olebedev/config#Config.Flag) method, for command line arguments parsing
+- [`U`](https://godoc.org/github.com/olebedev/config#Config.UBool) methods
 
 Example and more information you can get [here](http://godoc.org/github.com/olebedev/config).
