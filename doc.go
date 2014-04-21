@@ -125,5 +125,15 @@ In case of OS environment all existing at the moment of parsing keys will be sca
 but in uppercase and the separator will be `_` instead of a `.`.
 In case of command line arguments possible to use regular dot notation syntax for all keys.
 For see existing keys we can run application with `-h`.
+
+We can use unsafe method to get value:
+
+  // ""
+  cfg.UString("undefined.key")
+
+  // or with default value
+  unsafeValue := cfg.UString("undefined.key", "default value")
+
+There is unsafe methods, like regular, but wuth prefix `U`.
 */
 package config

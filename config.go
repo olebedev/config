@@ -32,12 +32,12 @@ func (cfg *Config) Get(path string) (*Config, error) {
 	return &Config{Root: n}, nil
 }
 
-// Set a nested config according to a dotted path
+// Set a nested config according to a dotted path.
 func (cfg *Config) Set(path string, val interface{}) error {
 	return Set(cfg.Root, path, val)
 }
 
-// Fetch data from system env, based on existing config keys
+// Fetch data from system env, based on existing config keys.
 func (cfg *Config) Env() *Config {
 	keys := getKeys(cfg.Root)
 	for _, key := range keys {
@@ -48,7 +48,7 @@ func (cfg *Config) Env() *Config {
 	return cfg
 }
 
-// Parse command line arguments, based on existing config keys
+// Parse command line arguments, based on existing config keys.
 func (cfg *Config) Flag() *Config {
 	keys := getKeys(cfg.Root)
 	hash := map[string]*string{}
@@ -102,6 +102,20 @@ func (cfg *Config) Bool(path string) (bool, error) {
 	return false, typeMismatch("bool or string", n)
 }
 
+// UBool retirns a bool according to a dotted path or default value or false.
+func (c *Config) UBool(path string, defaults ...bool) bool {
+	value, err := c.Bool(path)
+
+	if err == nil {
+		return value
+	}
+
+	for _, def := range defaults {
+		return def
+	}
+	return false
+}
+
 // Float64 returns a float64 according to a dotted path.
 func (cfg *Config) Float64(path string) (float64, error) {
 	n, err := Get(cfg.Root, path)
@@ -117,6 +131,20 @@ func (cfg *Config) Float64(path string) (float64, error) {
 		return strconv.ParseFloat(n, 64)
 	}
 	return 0, typeMismatch("float64, int or string", n)
+}
+
+// UFloat64 returns a float64 according to a dotted path or default value or 0.
+func (c *Config) UFloat64(path string, defaults ...float64) float64 {
+	value, err := c.Float64(path)
+
+	if err == nil {
+		return value
+	}
+
+	for _, def := range defaults {
+		return def
+	}
+	return float64(0)
 }
 
 // Int returns an int according to a dotted path.
@@ -146,6 +174,20 @@ func (cfg *Config) Int(path string) (int, error) {
 	return 0, typeMismatch("float64, int or string", n)
 }
 
+// UInt returns an int according to a dotted path or default value or 0.
+func (c *Config) UInt(path string, defaults ...int) int {
+	value, err := c.Int(path)
+
+	if err == nil {
+		return value
+	}
+
+	for _, def := range defaults {
+		return def
+	}
+	return 0
+}
+
 // List returns a []interface{} according to a dotted path.
 func (cfg *Config) List(path string) ([]interface{}, error) {
 	n, err := Get(cfg.Root, path)
@@ -158,6 +200,20 @@ func (cfg *Config) List(path string) ([]interface{}, error) {
 	return nil, typeMismatch("[]interface{}", n)
 }
 
+// UList returns a []interface{} according to a dotted path or defaults or []interface{}.
+func (c *Config) UList(path string, defaults ...[]interface{}) []interface{} {
+	value, err := c.List(path)
+
+	if err == nil {
+		return value
+	}
+
+	for _, def := range defaults {
+		return def
+	}
+	return make([]interface{}, 0)
+}
+
 // Map returns a map[string]interface{} according to a dotted path.
 func (cfg *Config) Map(path string) (map[string]interface{}, error) {
 	n, err := Get(cfg.Root, path)
@@ -168,6 +224,20 @@ func (cfg *Config) Map(path string) (map[string]interface{}, error) {
 		return value, nil
 	}
 	return nil, typeMismatch("map[string]interface{}", n)
+}
+
+// UMap returns a map[string]interface{} according to a dotted path or default or map[string]interface{}.
+func (c *Config) UMap(path string, defaults ...map[string]interface{}) map[string]interface{} {
+	value, err := c.Map(path)
+
+	if err == nil {
+		return value
+	}
+
+	for _, def := range defaults {
+		return def
+	}
+	return map[string]interface{}{}
 }
 
 // String returns a string according to a dotted path.
@@ -183,6 +253,20 @@ func (cfg *Config) String(path string) (string, error) {
 		return n, nil
 	}
 	return "", typeMismatch("bool, float64, int or string", n)
+}
+
+// UString returns a string according to a dotted path or default or "".
+func (c *Config) UString(path string, defaults ...string) string {
+	value, err := c.String(path)
+
+	if err == nil {
+		return value
+	}
+
+	for _, def := range defaults {
+		return def
+	}
+	return ""
 }
 
 // typeMismatch returns an error for an expected type.

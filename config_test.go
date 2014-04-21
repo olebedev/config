@@ -6,6 +6,7 @@ package config
 
 import (
 	"os"
+	"reflect"
 	"testing"
 )
 
@@ -273,6 +274,38 @@ func TestEnv(t *testing.T) {
 	}
 }
 
+func TestUFunctions(t *testing.T) {
+	cfg, err := ParseYaml(yamlString)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// UString
+	expect(t, cfg.UString("map.key8"), "value8")
+	expect(t, cfg.UString("map.key8", "default"), "value8")
+	expect(t, cfg.UString("map.undefined", "default"), "default")
+	expect(t, cfg.UString("map.undefined"), "")
+
+	// UBool
+	expect(t, cfg.UBool("map.key0"), true)
+	expect(t, cfg.UBool("map.key0", false), true)
+	expect(t, cfg.UBool("map.undefined", true), true)
+	expect(t, cfg.UBool("map.undefined"), false)
+
+	// UFloat64
+	expect(t, cfg.UFloat64("map.key4"), float64(4.2))
+	expect(t, cfg.UFloat64("map.key4", float64(1)), float64(4.2))
+	expect(t, cfg.UFloat64("map.undefined", float64(0.99)), float64(0.99))
+	expect(t, cfg.UFloat64("map.undefined"), float64(0))
+
+	// UInt
+	expect(t, cfg.UInt("map.key6"), 42)
+	expect(t, cfg.UInt("map.key6", 37), 42)
+	expect(t, cfg.UInt("map.undefined", 37), 37)
+	expect(t, cfg.UInt("map.undefined"), 0)
+
+}
+
 func testConfig(t *testing.T, cfg *Config) {
 Loop:
 	for _, test := range configTests {
@@ -352,4 +385,10 @@ func equalMap(m1, m2 interface{}) bool {
 		}
 	}
 	return true
+}
+
+func expect(t *testing.T, a interface{}, b interface{}) {
+	if a != b {
+		t.Errorf("Expected %v (type %v) - Got %v (type %v)", b, reflect.TypeOf(b), a, reflect.TypeOf(a))
+	}
 }
