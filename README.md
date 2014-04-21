@@ -1,7 +1,4 @@
-config
-======
-
-[![GoDoc](https://godoc.org/github.com/olebedev/config?status.png)](https://godoc.org/github.com/olebedev/config)
+# Config [![wercker status](https://app.wercker.com/status/434dc06bfabf5b12bc5e25bcac109e38/s/ "wercker status")](https://app.wercker.com/project/bykey/434dc06bfabf5b12bc5e25bcac109e38) [![GoDoc](https://godoc.org/github.com/olebedev/config?status.png)](https://godoc.org/github.com/olebedev/config)
 
 Package config provides convenient access methods to configuration
 stored as JSON or YAML.
