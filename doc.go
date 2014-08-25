@@ -122,7 +122,7 @@ We can also specify the order of parsing:
     cfg.Flag().Env()
 
 In case of OS environment all existing at the moment of parsing keys will be scanned in OS environment,
-but in uppercase and the separator will be `_` instead of a `.`.
+but in uppercase and the separator will be `_` instead of a `.`. In case of flags separator will be `-`.
 In case of command line arguments possible to use regular dot notation syntax for all keys.
 For see existing keys we can run application with `-h`.
 

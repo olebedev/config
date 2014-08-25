@@ -53,7 +53,7 @@ func (cfg *Config) Flag() *Config {
 	keys := getKeys(cfg.Root)
 	hash := map[string]*string{}
 	for _, key := range keys {
-		k := strings.Join(key, ".")
+		k := strings.Join(key, "-")
 		hash[k] = new(string)
 		val, _ := cfg.String(k)
 		flag.StringVar(hash[k], k, val, "")
