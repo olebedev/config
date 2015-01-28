@@ -62,7 +62,8 @@ func (cfg *Config) Flag() *Config {
 	flag.Parse()
 
 	flag.Visit(func(f *flag.Flag) {
-		cfg.Set(f.Name, f.Value.String())
+		name := strings.Replace(f.Name, "-", ".", -1)
+		cfg.Set(name, f.Value.String())
 	})
 
 	return cfg
