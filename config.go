@@ -13,7 +13,7 @@ import (
 	"strings"
 	"syscall"
 
-	"launchpad.net/~niemeyer/goyaml/beta"
+	"gopkg.in/yaml.v2"
 )
 
 // Config ---------------------------------------------------------------------
