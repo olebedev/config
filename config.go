@@ -493,7 +493,7 @@ func ParseYamlFile(filename string) (*Config, error) {
 func parseYaml(cfg []byte) (*Config, error) {
 	var out interface{}
 	var err error
-	if err = goyaml.Unmarshal(cfg, &out); err != nil {
+	if err = yaml.Unmarshal(cfg, &out); err != nil {
 		return nil, err
 	}
 	if out, err = normalizeValue(out); err != nil {
@@ -504,7 +504,7 @@ func parseYaml(cfg []byte) (*Config, error) {
 
 // RenderYaml renders a YAML configuration.
 func RenderYaml(cfg interface{}) (string, error) {
-	b, err := goyaml.Marshal(cfg)
+	b, err := yaml.Marshal(cfg)
 	if err != nil {
 		return "", err
 	}
