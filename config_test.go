@@ -259,6 +259,25 @@ func TestSet(t *testing.T) {
 	}
 }
 
+func TestSetUnexistingValue(t *testing.T) {
+	cfg, err := ParseYaml(yamlString)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	val := "test"
+
+	err = cfg.Set("some.one", val)
+	v, _ := cfg.String("some.one")
+	expect(t, v, val)
+
+	err = cfg.Set("some.thing.10", val)
+	v, _ = cfg.String("some.thing.10")
+	expect(t, v, val)
+	// try to set by string key into slice
+	expect(t, cfg.Set("some.thing.more", val) != nil, true)
+}
+
 func TestEnv(t *testing.T) {
 	cfg, err := ParseYaml(yamlString)
 	if err != nil {

@@ -323,7 +323,8 @@ func Get(cfg interface{}, path string) (interface{}, error) {
 	return cfg, nil
 }
 
-// Set returns an error, in case when it is not possible to establish the value obtained in accordance with given dotted path.
+// Set returns an error, in case when it is not possible to
+// establish the value obtained in accordance with given dotted path.
 func Set(cfg interface{}, path string, value interface{}) error {
 	parts := strings.Split(path, ".")
 	// Normalize path.
@@ -337,38 +338,58 @@ func Set(cfg interface{}, path string, value interface{}) error {
 		}
 	}
 
-	// Get the value.
-	var point = &cfg
+	point := &cfg
 	for pos, part := range parts {
 		switch c := (*point).(type) {
 		case []interface{}:
 			if i, error := strconv.ParseInt(part, 10, 0); error == nil {
-				if int(i) < len(c) {
-					if pos+1 == len(parts) {
-						c[i] = value
-					} else {
-						point = &c[i]
-					}
-				} else {
-					return fmt.Errorf(
-						"Index out of range at %q: list has only %v items",
-						strings.Join(parts[:pos+1], "."), len(c))
+				// 1. normalize slice capacity
+				if int(i) >= cap(c) {
+					c = append(c, make([]interface{}, int(i)-cap(c)+1, int(i)-cap(c)+1)...)
 				}
+
+				// 2. set value or go further
+				if pos+1 == len(parts) {
+					c[i] = value
+				} else {
+
+					// if exists just pick the pointer
+					if va := c[i]; va != nil {
+						point = &va
+					} else {
+						// is next part slice or map?
+						if i, err := strconv.ParseInt(parts[pos+1], 10, 0); err == nil {
+							va = make([]interface{}, int(i)+1, int(i)+1)
+						} else {
+							va = make(map[string]interface{})
+						}
+						c[i] = va
+						point = &va
+					}
+
+				}
+
 			} else {
 				return fmt.Errorf("Invalid list index at %q",
 					strings.Join(parts[:pos+1], "."))
 			}
 		case map[string]interface{}:
-			if va, ok := c[part]; ok {
-				if pos+1 == len(parts) {
-					c[part] = value
+			if pos+1 == len(parts) {
+				c[part] = value
+			} else {
+				// if exists just pick the pointer
+				if va, ok := c[part]; ok {
+					point = &va
 				} else {
+					// is next part slice or map?
+					if i, err := strconv.ParseInt(parts[pos+1], 10, 0); err == nil {
+						va = make([]interface{}, int(i)+1, int(i)+1)
+					} else {
+						va = make(map[string]interface{})
+					}
+					c[part] = va
 					point = &va
 				}
-
-			} else {
-				return fmt.Errorf("Nonexistent map key at %q",
-					strings.Join(parts[:pos+1], "."))
 			}
 		default:
 			return fmt.Errorf(
