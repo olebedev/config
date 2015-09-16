@@ -13,6 +13,7 @@ import (
 	"strings"
 	"syscall"
 
+	"bytes"
 	"github.com/BurntSushi/toml"
 	"gopkg.in/yaml.v2"
 )
@@ -488,11 +489,13 @@ func parseToml(cfg []byte) (*Config, error) {
 
 // RenderToml renders a TOML configuration.
 func RenderToml(cfg interface{}) (string, error) {
-	b, err := toml.Marshal(cfg)
+	var b bytes.Buffer
+	e := toml.NewEncoder(&b)
+	err := e.Encode(cfg)
 	if err != nil {
 		return "", err
 	}
-	return string(b), nil
+	return b.String(), nil
 }
 
 // JSON -----------------------------------------------------------------------
