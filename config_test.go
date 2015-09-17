@@ -325,6 +325,34 @@ func TestUFunctions(t *testing.T) {
 
 }
 
+func TestCopy(t *testing.T) {
+	cfg, err := ParseYaml(yamlString)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	cfg2, err := cfg.Copy()
+	expect(t, err, nil)
+	cfg2.Set("map.key6", 43)
+
+	yaml1, _ := RenderYaml(cfg.Root)
+	yaml2, _ := RenderYaml(cfg2.Root)
+
+	expect(t, yaml2 == yaml1, false)
+
+	cfg3, err := cfg.Copy("config", "server")
+	expect(t, err, nil)
+	cfg4, err := cfg.Copy("config.server")
+	expect(t, err, nil)
+
+	expect(t, cfg3.UString("0"), "www.google.com")
+	expect(t, cfg4.UString("0"), "www.google.com")
+
+	yaml3, _ := RenderYaml(cfg3.Root)
+	yaml4, _ := RenderYaml(cfg4.Root)
+	expect(t, yaml3, yaml4)
+}
+
 func testConfig(t *testing.T, cfg *Config) {
 Loop:
 	for _, test := range configTests {

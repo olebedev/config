@@ -14,6 +14,7 @@ import (
 	"syscall"
 
 	"bytes"
+
 	"github.com/BurntSushi/toml"
 	"gopkg.in/yaml.v2"
 )
@@ -270,6 +271,32 @@ func (c *Config) UString(path string, defaults ...string) string {
 		return def
 	}
 	return ""
+}
+
+// Copy returns a deep copy with given path or without.
+func (c *Config) Copy(dottedPath ...string) (*Config, error) {
+	toJoin := []string{}
+	for _, part := range dottedPath {
+		if len(part) != 0 {
+			toJoin = append(toJoin, part)
+		}
+	}
+
+	var err error
+	var path = strings.Join(toJoin, ".")
+	var cfg = c
+	var root = ""
+
+	if len(path) > 0 {
+		if cfg, err = c.Get(path); err != nil {
+			return nil, err
+		}
+	}
+
+	if root, err = RenderYaml(cfg.Root); err != nil {
+		return nil, err
+	}
+	return ParseYaml(root)
 }
 
 // typeMismatch returns an error for an expected type.
