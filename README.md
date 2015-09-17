@@ -1,7 +1,7 @@
 # Config [![wercker status](https://app.wercker.com/status/b4e8561d9a711afcb016bf0018e83897/s/ "wercker status")](https://app.wercker.com/project/bykey/b4e8561d9a711afcb016bf0018e83897) [![GoDoc](https://godoc.org/github.com/olebedev/config?status.png)](https://godoc.org/github.com/olebedev/config)
 
 Package config provides convenient access methods to configuration
-stored as JSON or YAML.
+stored as JSON, TOML or YAML.
 
 This is a fork of the [original version](https://github.com/moraes/config).
 This version extends the functionality of the original without losing compatibility.
