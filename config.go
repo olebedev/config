@@ -13,9 +13,6 @@ import (
 	"strings"
 	"syscall"
 
-	"bytes"
-
-	"github.com/BurntSushi/toml"
 	"gopkg.in/yaml.v2"
 )
 
@@ -483,46 +480,6 @@ func normalizeValue(value interface{}) (interface{}, error) {
 		return value, nil
 	}
 	return nil, fmt.Errorf("Unsupported type: %T", value)
-}
-
-// TOML -----------------------------------------------------------------------
-
-// ParseToml reads a TOML configuration from the given string.
-func ParseToml(cfg string) (*Config, error) {
-	return parseToml([]byte(cfg))
-}
-
-// ParseTomlFile reads a JSON configuration from the given filename.
-func ParseTomlFile(filename string) (*Config, error) {
-	cfg, err := ioutil.ReadFile(filename)
-	if err != nil {
-		return nil, err
-	}
-	return parseToml(cfg)
-}
-
-// parseToml performs the real JSON parsing.
-func parseToml(cfg []byte) (*Config, error) {
-	var out interface{}
-	var err error
-	if err = toml.Unmarshal(cfg, &out); err != nil {
-		return nil, err
-	}
-	if out, err = normalizeValue(out); err != nil {
-		return nil, err
-	}
-	return &Config{Root: out}, nil
-}
-
-// RenderToml renders a TOML configuration.
-func RenderToml(cfg interface{}) (string, error) {
-	var b bytes.Buffer
-	e := toml.NewEncoder(&b)
-	err := e.Encode(cfg)
-	if err != nil {
-		return "", err
-	}
-	return b.String(), nil
 }
 
 // JSON -----------------------------------------------------------------------
