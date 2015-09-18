@@ -296,6 +296,30 @@ func (c *Config) Copy(dottedPath ...string) (*Config, error) {
 	return ParseYaml(root)
 }
 
+// Extend returns extended copy of current config with applied
+// values from the given config instance. Note that if you extend
+// with different structure you will get an error. See: `.Set()` method
+// for details.
+func (c *Config) Extend(cfg *Config) (*Config, error) {
+	n, err := c.Copy()
+	if err != nil {
+		return nil, err
+	}
+
+	keys := getKeys(cfg.Root)
+	for _, key := range keys {
+		k := strings.Join(key, ".")
+		i, err := Get(cfg.Root, k)
+		if err != nil {
+			return nil, err
+		}
+		if err := n.Set(k, i); err != nil {
+			return nil, err
+		}
+	}
+	return n, nil
+}
+
 // typeMismatch returns an error for an expected type.
 func typeMismatch(expected string, got interface{}) error {
 	return fmt.Errorf("Type mismatch: expected %s; got %T", expected, got)

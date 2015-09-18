@@ -293,7 +293,7 @@ func TestEnv(t *testing.T) {
 	}
 }
 
-func TestUFunctions(t *testing.T) {
+func TestUMethods(t *testing.T) {
 	cfg, err := ParseYaml(yamlString)
 	if err != nil {
 		t.Fatal(err)
@@ -351,6 +351,51 @@ func TestCopy(t *testing.T) {
 	yaml3, _ := RenderYaml(cfg3.Root)
 	yaml4, _ := RenderYaml(cfg4.Root)
 	expect(t, yaml3, yaml4)
+}
+
+func TestExtendError(t *testing.T) {
+	cfg, err := ParseYaml(yamlString)
+	if err != nil {
+		t.Fatal(err)
+	}
+	cfg2, err := ParseYaml(`
+list:
+  key0: true
+map:
+  - true
+`)
+	var nilCfg *Config
+	extended, err := cfg.Extend(cfg2)
+	expect(t, extended, nilCfg)
+	expect(t, err.Error(), "Invalid list index at \"list.key0\"")
+}
+
+func TestExtend(t *testing.T) {
+	cfg, err := ParseYaml(yamlString)
+	if err != nil {
+		t.Fatal(err)
+	}
+	cfg2, err := ParseYaml(`
+map:
+  key0: extend
+list:
+  - extend
+`)
+
+	extended, err := cfg.Extend(cfg2)
+	expect(t, err, nil)
+	// immutable
+	expect(t, cfg.UBool("map.key0"), true)
+	expect(t, cfg.UBool("list.0"), true)
+
+	expect(t, cfg2.UString("map.key8", "not found"), "not found")
+	expect(t, cfg2.UInt("list.8", 7), 7)
+
+	// result
+	expect(t, extended.UString("map.key0"), "extend")
+	expect(t, extended.UString("map.key8"), "value8")
+	expect(t, extended.UString("list.0"), "extend")
+	expect(t, extended.UString("list.8"), "item8")
 }
 
 func testConfig(t *testing.T, cfg *Config) {
