@@ -500,7 +500,7 @@ func normalizeValue(value interface{}) (interface{}, error) {
 			node[key] = item
 		}
 		return node, nil
-	case bool, float64, int, string:
+	case bool, float64, int, string, nil:
 		return value, nil
 	}
 	return nil, fmt.Errorf("Unsupported type: %T", value)
