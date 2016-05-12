@@ -72,18 +72,27 @@ func (cfg *Config) Flag() *Config {
 // Get all keys for given interface
 func getKeys(source interface{}, base ...string) [][]string {
 	acc := [][]string{}
+
+	// Copy "base" so that underlying slice array is not
+	// modified in recursive calls
+	nextBase := make([]string, len(base))
+	copy(nextBase, base)
+
 	switch c := source.(type) {
 	case map[string]interface{}:
 		for k, v := range c {
-			acc = append(acc, getKeys(v, append(base, k)...)...)
+			keys := getKeys(v, append(nextBase, k)...)
+			acc = append(acc, keys...)
 		}
 	case []interface{}:
 		for i, v := range c {
 			k := strconv.Itoa(i)
-			acc = append(acc, getKeys(v, append(base, k)...)...)
+			keys := getKeys(v, append(nextBase, k)...)
+			acc = append(acc, keys...)
 		}
 	default:
-		acc = append(acc, base)
+		acc = append(acc, nextBase)
+		return acc
 	}
 	return acc
 }

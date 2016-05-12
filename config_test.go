@@ -293,6 +293,25 @@ func TestEnv(t *testing.T) {
 	}
 }
 
+func TestFlag(t *testing.T) {
+	cfg, err := ParseYaml(`
+map:
+  - listmap1:
+      nested1: value1
+      nested2: value2
+    listmap2: value3
+`)
+	if err != nil {
+		t.Fatal(err)
+	}
+	os.Args = append(os.Args, "-map-0-listmap2", "other")
+	cfg.Flag()
+	test, _ := cfg.String("map.0.listmap2")
+	if test != "other" {
+		t.Errorf(`"%s" != "%s"`, test, "other")
+	}
+}
+
 func TestUMethods(t *testing.T) {
 	cfg, err := ParseYaml(yamlString)
 	if err != nil {
