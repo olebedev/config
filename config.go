@@ -112,7 +112,7 @@ func (cfg *Config) Bool(path string) (bool, error) {
 	return false, typeMismatch("bool or string", n)
 }
 
-// UBool retirns a bool according to a dotted path or default value or false.
+// UBool returns a bool according to a dotted path or default value or false.
 func (c *Config) UBool(path string, defaults ...bool) bool {
 	value, err := c.Bool(path)
 
