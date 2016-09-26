@@ -284,9 +284,24 @@ func TestEnv(t *testing.T) {
 		t.Fatal(err)
 	}
 	val := "test"
-	cfg.Set("map.key8", val)
+	cfg.Set("map.key8", "should be overwritten")
 	os.Setenv("MAP_KEY8", val)
 	cfg.Env()
+	test, _ := cfg.String("map.key8")
+	if test != val {
+		t.Errorf(`"%s" != "%s"`, test, val)
+	}
+}
+
+func TestEnvPrefix(t *testing.T) {
+	cfg, err := ParseYaml(yamlString)
+	if err != nil {
+		t.Fatal(err)
+	}
+	val := "test"
+	cfg.Set("map.key8", "should be overwritten")
+	os.Setenv("PREFIX_MAP_KEY8", val)
+	cfg.EnvPrefix("prefix")
 	test, _ := cfg.String("map.key8")
 	if test != val {
 		t.Errorf(`"%s" != "%s"`, test, val)
