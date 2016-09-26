@@ -39,9 +39,19 @@ func (cfg *Config) Set(path string, val interface{}) error {
 
 // Fetch data from system env, based on existing config keys.
 func (cfg *Config) Env() *Config {
+	return cfg.EnvPrefix("")
+}
+
+// Fetch data from system env using prefix, based on existing config keys.
+func (cfg *Config) EnvPrefix(prefix string) *Config {
+	if prefix != "" {
+		prefix = strings.ToUpper(prefix) + "_"
+	}
+
 	keys := getKeys(cfg.Root)
 	for _, key := range keys {
-		if val, exist := syscall.Getenv(strings.ToUpper(strings.Join(key, "_"))); exist {
+		k := strings.ToUpper(strings.Join(key, "_"))
+		if val, exist := syscall.Getenv(prefix + k); exist {
 			cfg.Set(strings.Join(key, "."), val)
 		}
 	}
