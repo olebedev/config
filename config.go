@@ -565,6 +565,11 @@ func RenderJson(cfg interface{}) (string, error) {
 
 // YAML -----------------------------------------------------------------------
 
+// ParseYamlBytes reads a YAML configuration from the given []byte.
+func ParseYamlBytes(cfg []byte) (*Config, error) {
+	return parseYaml(cfg)
+}
+
 // ParseYaml reads a YAML configuration from the given string.
 func ParseYaml(cfg string) (*Config, error) {
 	return parseYaml([]byte(cfg))
