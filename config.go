@@ -5,6 +5,7 @@
 package config
 
 import (
+	"bytes"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -13,14 +14,20 @@ import (
 	"strings"
 	"syscall"
 
-	"gopkg.in/yaml.v2"
+	yaml "gopkg.in/yaml.v2"
 )
 
 // Config ---------------------------------------------------------------------
 
 // Config represents a configuration with convenient access methods.
 type Config struct {
-	Root interface{}
+	Root    interface{}
+	lastErr error
+}
+
+// Error return last error
+func (c *Config) Error() error {
+	return c.lastErr
 }
 
 // Get returns a nested config according to a dotted path.
@@ -72,6 +79,34 @@ func (cfg *Config) Flag() *Config {
 	flag.Parse()
 
 	flag.Visit(func(f *flag.Flag) {
+		name := strings.Replace(f.Name, "-", ".", -1)
+		cfg.Set(name, f.Value.String())
+	})
+
+	return cfg
+}
+
+// Args command line arguments, based on existing config keys.
+func (cfg *Config) Args(args ...string) *Config {
+	if len(args) <= 1 {
+		return cfg
+	}
+
+	keys := getKeys(cfg.Root)
+	hash := map[string]*string{}
+	_flag := flag.NewFlagSet(args[0], flag.ContinueOnError)
+	var _err bytes.Buffer
+	_flag.SetOutput(&_err)
+	for _, key := range keys {
+		k := strings.Join(key, "-")
+		hash[k] = new(string)
+		val, _ := cfg.String(k)
+		_flag.StringVar(hash[k], k, val, "")
+	}
+
+	cfg.lastErr = _flag.Parse(args[1:])
+
+	_flag.Visit(func(f *flag.Flag) {
 		name := strings.Replace(f.Name, "-", ".", -1)
 		cfg.Set(name, f.Value.String())
 	})
