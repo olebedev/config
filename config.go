@@ -383,7 +383,7 @@ func typeMismatch(expected string, got interface{}) error {
 
 // Get returns a child of the given value according to a dotted path.
 func Get(cfg interface{}, path string) (interface{}, error) {
-	parts := strings.Split(path, ".")
+	parts := splitKeyOnParts(path)
 	// Normalize path.
 	for k, v := range parts {
 		if v == "" {
@@ -425,6 +425,33 @@ func Get(cfg interface{}, path string) (interface{}, error) {
 	}
 
 	return cfg, nil
+}
+
+func splitKeyOnParts(key string) []string {
+	parts := []string{}
+
+	bracketOpened := false
+	var buffer bytes.Buffer
+	for _, char := range key {
+		if char == 91 || char == 93 { // [ ]
+			bracketOpened = char == 91
+			continue
+		}
+		if char == 46 && !bracketOpened { // point
+			parts = append(parts, buffer.String())
+			buffer.Reset()
+			continue
+		}
+
+		buffer.WriteRune(char)
+	}
+
+	if buffer.String() != "" {
+		parts = append(parts, buffer.String())
+		buffer.Reset()
+	}
+
+	return parts
 }
 
 // Set returns an error, in case when it is not possible to

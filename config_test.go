@@ -432,6 +432,27 @@ list:
 	expect(t, extended.UString("list.8"), "item8")
 }
 
+func TestComplexYamlKeys(t *testing.T) {
+	cfg, err := ParseYaml(`
+root:
+  field1: value1
+  field.something.2: value2
+  "field number 3":
+    field4: value3
+  field.something.4:
+    field5: value5
+    field.6: value6
+`)
+	expect(t, err, nil)
+
+	// result
+	expect(t, cfg.UString("root.field1"), "value1")
+	expect(t, cfg.UString("root.[field.something.2]"), "value2")
+	expect(t, cfg.UString("root.field number 3.field4"), "value3")
+	expect(t, cfg.UString("root.[field.something.4].field5"), "value5")
+	expect(t, cfg.UString("root.[field.something.4].[field.6]"), "value6")
+}
+
 func testConfig(t *testing.T, cfg *Config) {
 Loop:
 	for _, test := range configTests {
