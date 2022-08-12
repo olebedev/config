@@ -10,6 +10,7 @@ import (
 	"flag"
 	"fmt"
 	"io/ioutil"
+	"reflect"
 	"strconv"
 	"strings"
 	"syscall"
@@ -350,28 +351,123 @@ func (c *Config) Copy(dottedPath ...string) (*Config, error) {
 	return ParseYaml(root)
 }
 
-// Extend returns extended copy of current config with applied
-// values from the given config instance. Note that if you extend
-// with different structure you will get an error. See: `.Set()` method
-// for details.
-func (c *Config) Extend(cfg *Config) (*Config, error) {
-	n, err := c.Copy()
+// Extend returns an extended copy of given instance (cfgA) with applied
+// values from the current instance (cfgB). The new Config will have
+// all the keys and items of cfgA. Items from cfgB are added to the new
+// config if they satisfy the following conditions:
+//  1. Their key does not already exist in the new Config
+//  2. They can be appended to the new Config without changing the type
+//     if items already in the Config.
+// The function should never return an error if the Config structs have
+// the correct structure
+func (cfgB *Config) Extend(cfgA *Config) (*Config, error) {
+
+	newCfgInterface, err := extend(*cfgA, *cfgB)
 	if err != nil {
 		return nil, err
 	}
 
-	keys := getKeys(cfg.Root)
-	for _, key := range keys {
-		k := strings.Join(key, ".")
-		i, err := Get(cfg.Root, k)
+	newCfg, ok := newCfgInterface.(Config)
+	if !ok {
+		return nil, err
+	}
+
+	return &newCfg, nil
+}
+
+// Recursively extends ca with cb and returns a copy
+func extend(ca interface{}, cb interface{}) (interface{}, error) {
+
+	// make sure types of ca and cb are correct
+
+	if reflect.TypeOf(ca) != reflect.TypeOf(cb) {
+		switch ca.(type) {
+		case map[string]interface{}:
+			cb = map[string]interface{}{}
+		case []interface{}:
+			cb = []interface{}{}
+		case float64, string, int, bool:
+			return ca, nil
+			// do nothing
+		default:
+			return nil, fmt.Errorf("Invalid input. ca and cb must be of same type. They are %T %T\n", ca, cb)
+		}
+	}
+
+	switch vala := ca.(type) {
+	case Config:
+		valb, _ := cb.(Config)
+		cfg, err := extend(vala.Root, valb.Root)
 		if err != nil {
 			return nil, err
 		}
-		if err := n.Set(k, i); err != nil {
-			return nil, err
+		return Config{cfg, nil}, nil
+
+	case map[string]interface{}:
+		mapb, _ := cb.(map[string]interface{})
+		mapa := vala
+
+		// Create a map and fill it with items from ca and cb
+		newmap := map[string]interface{}{}
+		var err error
+
+		for key, elementa := range mapa {
+			elementb, ok := mapb[key]
+			if ok {
+				newmap[key], err = extend(elementa, elementb)
+				if err != nil {
+					return newmap, err
+				}
+			} else {
+				newmap[key], err = extend(elementa, nil)
+				if err != nil {
+					return newmap, err
+				}
+			}
 		}
+
+		for key, elementb := range mapb {
+			_, ok := mapa[key]
+			if !ok {
+				// only add element if it does not exist in ca
+				val, err := extend(elementb, nil)
+				if err != nil {
+					return nil, err
+				}
+				newmap[key] = val
+			}
+		}
+		return newmap, nil
+
+	case []interface{}:
+		ifaceb, _ := cb.([]interface{})
+		ifacea := vala
+
+		// create new slice capable of holding all items from both ca and cb
+		newiface := make([]interface{}, 0, cap(ifacea)+cap(ifaceb))
+		maxlen := len(ifacea)
+
+		if len(ifaceb) > len(ifacea) {
+			maxlen = len(ifaceb)
+		}
+		for i := 0; i < maxlen; i++ {
+
+			// only add elements from cb if their index does not exist in ca
+
+			if i < len(ifacea) {
+				newiface = append(newiface, ifacea[i])
+			} else if i < len(ifaceb) {
+				newiface = append(newiface, ifaceb[i])
+			} else {
+				break
+			}
+		}
+		return newiface, nil
+	case float64, string, bool, int:
+		return ca, nil
 	}
-	return n, nil
+
+	return nil, fmt.Errorf("Got invalid type: %T %T\n", ca, cb)
 }
 
 // typeMismatch returns an error for an expected type.
