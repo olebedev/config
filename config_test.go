@@ -387,6 +387,23 @@ func TestCopy(t *testing.T) {
 	expect(t, yaml3, yaml4)
 }
 
+func TestExtendError(t *testing.T) {
+	cfg, err := ParseYaml(yamlString)
+	if err != nil {
+		t.Fatal(err)
+	}
+	cfg2, err := ParseYaml(`
+list:
+  key0: true
+map:
+  - true
+`)
+	var nilCfg *Config
+	extended, err := cfg.Extend(cfg2)
+	expect(t, extended, nilCfg)
+	expect(t, err.Error(), "Invalid list index at \"list.key0\"")
+}
+
 func TestExtend(t *testing.T) {
 	cfg, err := ParseYaml(yamlString)
 	if err != nil {
@@ -413,21 +430,6 @@ list:
 	expect(t, extended.UString("map.key8"), "value8")
 	expect(t, extended.UString("list.0"), "extend")
 	expect(t, extended.UString("list.8"), "item8")
-
-  // #22 Extending lists 
-
-  cfgList1, err := ParseJson(`{"list":[1,2]}`)
-  if err != nil {
-    t.Fatal(err)
-  }
-  cfgList2, err := ParseJson(`{"list":[1,2,3]}`)
-  if err != nil {
-    t.Fatal(err)
-  }
-
-  cfgListExtended, err := cfgList1.Extend(cfgList2)
-  expect(t, err, nil)
-  expect(t, cfgListExtended.UInt("list.2"), 3)
 }
 
 func TestComplexYamlKeys(t *testing.T) {
