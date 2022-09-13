@@ -509,7 +509,7 @@ func Set(cfg interface{}, path string, value interface{}) error {
 				c[part] = value
 			} else {
 				// if exists just pick the pointer
-				if va, ok := c[part]; ok {
+				if va, ok := c[part]; ok && va != nil {
 					point = &va
 				} else {
 					// is next part slice or map?
